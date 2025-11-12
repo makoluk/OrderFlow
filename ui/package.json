@@ -1,0 +1,24 @@
+{
+  "name": "orderflow-ui",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "patch-package": "^8.0.0",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.3"
+  }
+}

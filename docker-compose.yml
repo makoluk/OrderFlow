@@ -1,0 +1,121 @@
+services:
+  rabbitmq:
+    image: masstransit/rabbitmq
+    container_name: orderflow-rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: OrderFlow.Gateway/Dockerfile
+    container_name: orderflow-gateway
+    environment:
+      ASPNETCORE_URLS: http://+:80
+    ports:
+      - "5000:80"
+    depends_on: [orderservice, paymentservice, bankmock]
+
+  bankmock:
+    build:
+      context: .
+      dockerfile: OrderFlow.BankMock/Dockerfile
+    container_name: orderflow-bankmock
+    environment:
+      ASPNETCORE_URLS: http://+:80
+    depends_on: [rabbitmq]
+
+  orderservice:
+    build:
+      context: .
+      dockerfile: OrderFlow.OrderService/Dockerfile
+    container_name: orderflow-orderservice
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      # RabbitMQ varsayılan guest/guest ve localhost değil, servis adıyla erişilir:
+      Rabbit__Host: rabbitmq
+    depends_on: [rabbitmq]
+
+  paymentservice:
+    build:
+      context: .
+      dockerfile: OrderFlow.PaymentService/Dockerfile
+    container_name: orderflow-paymentservice
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      BankMock__BaseUrl: http://bankmock     # compose içinden erişim adıyla
+    depends_on: [rabbitmq, bankmock, orchestrator]
+
+  stockservice:
+    build:
+      context: .
+      dockerfile: OrderFlow.StockService/Dockerfile
+    container_name: orderflow-stockservice
+    depends_on: [rabbitmq, orchestrator]
+
+  emailworker:
+    build:
+      context: .
+      dockerfile: OrderFlow.EmailWorker/Dockerfile
+    container_name: orderflow-emailworker
+    depends_on: [rabbitmq, orchestrator]
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: OrderFlow.Orchestrator/Dockerfile
+    container_name: orderflow-orchestrator
+    depends_on: [rabbitmq]
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: orderflow-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8889:8889"   # Prometheus metrics endpoint
+    depends_on: [jaeger]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.53
+    container_name: orderflow-jaeger
+    ports:
+      - "16686:16686"  # UI
+      - "6831:6831/udp"  # Agent (Jaeger exporter bunu kullanır)
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: orderflow-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - orderservice
+      - paymentservice
+      - bankmock
+      - otel-collector
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: orderflow-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-storage:
+

@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'orderservice'
+    static_configs:
+      - targets: ['orderservice:80']
+        labels:
+          service: 'orderservice'
+    metrics_path: '/metrics'
+
+  - job_name: 'paymentservice'
+    static_configs:
+      - targets: ['paymentservice:80']
+        labels:
+          service: 'paymentservice'
+    metrics_path: '/metrics'
+
+  - job_name: 'bankmock'
+    static_configs:
+      - targets: ['bankmock:80']
+        labels:
+          service: 'bankmock'
+    metrics_path: '/metrics'
+
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
+        labels:
+          service: 'otel-collector'
+    metrics_path: '/metrics'
+

@@ -1,0 +1,14 @@
+services:
+  orderservice:
+    ports:
+      - "5001:80"
+
+  paymentservice:
+    ports:
+      - "5002:80"
+
+  bankmock:
+    ports:
+      - "5003:80"
+
+

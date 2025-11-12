@@ -1,0 +1,6 @@
+@OrderFlow.BankMock_HostAddress = http://localhost:5183
+
+GET {{OrderFlow.BankMock_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

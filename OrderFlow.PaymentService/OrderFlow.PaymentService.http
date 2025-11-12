@@ -1,0 +1,6 @@
+@OrderFlow.PaymentService_HostAddress = http://localhost:5034
+
+GET {{OrderFlow.PaymentService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
